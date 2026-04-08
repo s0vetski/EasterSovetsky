@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Пасхальный Сбор 2026</title>
+    <style>
+        * {
+            user-select: none;
+            touch-action: none;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Comic Neue', sans-serif;
+            background: #87CEEB;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #a2d5f2 0%, #ffffff 100%);
+            cursor: none;
+        }
+        body.event-ended canvas,
+        body.event-ended #ui {
+            display: none;
+        }
+        /* Блок со счётом */
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,200,0.8);
+            padding: 5px 15px;
+            border-radius: 40px;
+            font-size: 30px;
+            color: #5d4037;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+            z-index: 25;
+            backdrop-filter: blur(4px);
+        }
+        @media (max-width: 768px) {
+            #ui {
+                font-size: 28px;
+                top: 15px;
+                left: 15px;
+                padding: 4px 12px;
+            }
+        }
+
+        .logo-container {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .logo-container img {
+            width: 150px;
+            height: auto;
+            display: block;
+        }
+@media (max-width: 768px) {
+    .logo-container {
+        top: 60px;
+        left: 15px;
+    }
+    .logo-container img {
+        width: 80px;
+    }
+}
+
+        /* Верхний блок соцсетей */
+        .social-top {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,240,0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 8px 15px;
+            text-align: center;
+            z-index: 20;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .social-top .label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #5d4037;
+            margin-bottom: 5px;
+        }
+        .social-top .icons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .social-top .social-icon {
+            display: inline-block;
+            width: 44px;
+            height: 44px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .social-top .social-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .social-top .social-icon:active {
+            transform: scale(0.95);
+        }
+        @media (max-width: 768px) {
+            .social-top {
+                top: 80px;
+                right: 15px;
+                padding: 6px 12px;
+            }
+            .social-top .social-icon {
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        /* Модальное окно ввода имени */
+        .name-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .name-modal-content {
+            background: linear-gradient(145deg, #fff9e6, #ffefc0);
+            border-radius: 60px;
+            padding: 30px 40px;
+            text-align: center;
+            max-width: 90vw;
+            width: 360px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.4);
+            border: 3px solid #ffb347;
+            position: relative;
+        }
+        .name-modal-content h2 {
+            color: #c96f0e;
+            margin-top: 0;
+            font-size: 28px;
+        }
+        .name-modal-content p {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .name-modal-content input {
+            width: 80%;
+            padding: 12px 20px;
+            font-size: 20px;
+            border-radius: 50px;
+            border: 2px solid #ffb347;
+            text-align: center;
+            background: white;
+            margin: 10px 0;
+        }
+        .name-modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .name-modal-btn {
+            background: #ff8c42;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 3px 0 #b45f1b;
+        }
+        .name-modal-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #b45f1b;
+        }
+        .name-modal-btn.cancel {
+            background: #aaa;
+            box-shadow: 0 3px 0 #666;
+        }
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #c96f0e;
+        }
+
+        /* Экран лидерборда */
+        #leaderboard-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: linear-gradient(135deg, #fff9e6 0%, #ffe6b3 100%);
+            padding: 30px 40px;
+            border-radius: 60px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            min-width: 300px;
+            max-width: 85vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            z-index: 1000;
+            border: 3px solid #ffb347;
+            animation: bounceIn 0.5s ease-out forwards;
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        #leaderboard-screen h1 {
+            font-size: 2.5em;
+            margin-top: 0;
+            color: #c96f0e;
+            text-shadow: 2px 2px 0 #ffe0a3;
+        }
+        #leaderboard-screen .chick {
+            font-size: 60px;
+            margin: 10px 0;
+        }
+        .entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 2px dotted #f7c56e;
+            font-size: 20px;
+            background: rgba(255,255,200,0.6);
+            margin: 5px 0;
+            border-radius: 40px;
+        }
+        .btn {
+            background: #ff8c42;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #b45f1b;
+            transition: 0.05s linear;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #b45f1b;
+        }
+        .btn.hidden {
+            display: none;
+        }
+        .result-social {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 2px dashed #ffb347;
+        }
+        .result-social p {
+            font-size: 18px;
+            color: #a15505;
+            margin: 0 0 15px 0;
+            font-weight: bold;
+        }
+        .share-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .share-btn {
+            background: #4CAF50;
+            box-shadow: 0 4px 0 #2e6b2f;
+            min-width: 140px;
+        }
+        .copy-btn {
+            background: #2196F3;
+            box-shadow: 0 4px 0 #0b5e7e;
+            min-width: 140px;
+        }
+        .share-btn img, .copy-btn img {
+            width: 28px;
+            height: 28px;
+            vertical-align: middle;
+        }
+        @media (max-width: 600px) {
+            .share-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+            .share-btn, .copy-btn {
+                width: 80%;
+                min-width: unset;
+                justify-content: center;
+            }
+        }
+
+        .floating-message {
+            position: absolute;
+            font-size: 28px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 100;
+            text-shadow: 1px 1px 0 white;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0px); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<div id="ui">🧺 Счёт: <span id="score">0</span></div>
+
+<!-- Логотип под счётчиком -->
+<div class="logo-container">
+    <img src="logo.png" alt="Советский">
+</div>
+
+<div class="social-top">
+    <div class="label">📢 Наши соцсети</div>
+    <div class="icons">
+        <a href="https://t.me/sovetskiy_kzn" target="_blank" class="social-icon"><img src="tg.png" alt="Telegram"></a>
+        <a href="https://vk.com/sovetskiykzn" target="_blank" class="social-icon"><img src="vk.png" alt="VK"></a>
+        <a href="https://max.ru/id1660086060_gos" target="_blank" class="social-icon" id="maxLinkTop"><img src="max.png" alt="Max"></a>
+    </div>
+</div>
+
+<div id="leaderboard-screen">
+    <div class="chick">🐣🥚</div>
+    <h1 id="leaderboard-title">ИГРА ОКОНЧЕНА!</h1>
+    <div id="top-list">Загрузка ТОПа...</div>
+    <div class="result-social">
+        <p>📢 Поделитесь результатом в наших сообществах:</p>
+        <div class="share-buttons">
+            <a href="#" target="_blank" class="btn share-btn" id="shareTelegramBtn"><img src="tg.png" alt=""> Telegram</a>
+            <a href="#" target="_blank" class="btn share-btn" id="shareVkBtn"><img src="vk.png" alt=""> VK</a>
+            <button class="btn copy-btn" id="copyResultBtn"><img src="copy.png" alt=""> Копировать</button>
+        </div>
+    </div>
+    <button class="btn" id="reload-btn" onclick="location.reload()">🐥 ИГРАТЬ СНОВА</button>
+</div>
+
+<canvas id="game"></canvas>
+<div id="toast" class="toast">✅ Текст скопирован!</div>
+
+<script>
+    // ========== НАСТРОЙКИ AIRTABLE ==========
+    const AIRTABLE_TOKEN = "Bearer patoCdf3ZNKYCGGRz.87ea16a9b9c0ebd6847e8c2a5483189ef178acbed1d83a737ac481950cd47e55";
+    const BASE_ID = "apppqug2OCHqhkSAq";
+    const TABLE_NAME = "Table%201";
+
+    // ========== НАСТРОЙКИ ДЛЯ ШЕРИНГА ==========
+    const TG_USERNAME = "sovetskiy_kzn";
+    const VK_SCREEN_NAME = "sovetskiykzn";
+    const MAX_LINK = "https://max.ru/ваш_чат";
+
+    // ========== ДАТА ОКОНЧАНИЯ ИВЕНТА ==========
+    const EVENT_END = new Date(2026, 3, 12, 19, 0, 0);
+    function isEventActive() { return new Date() < EVENT_END; }
+
+    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let score = 0;
+    let gameActive = true;
+    let basket = { x: 0, y: 0, w: 110, h: 122 };
+    let basketImg = new Image();
+    basketImg.src = "korzina.png";
+    let basketLoaded = false;
+    basketImg.onload = () => { basketLoaded = true; };
+    let eggs = [];
+    let spawnTimeout = null;
+    let animationId = null;
+    let slowUntil = 0;
+    let finalPlayerName = "Аноним";
+
+    // Загрузка изображений яиц
+    const eggImages = {
+        normal: new Image(),
+        golden: new Image(),
+        ice: new Image(),
+        rotten: new Image()
+    };
+    eggImages.normal.src = "norm.png";
+    eggImages.golden.src = "zolo.png";
+    eggImages.ice.src = "zamoroz.png";
+    eggImages.rotten.src = "kaka.png";
+    let eggsLoaded = false;
+    let loadedCount = 0;
+    const totalEggs = 4;
+    for (let key in eggImages) {
+        eggImages[key].onload = () => {
+            loadedCount++;
+            if (loadedCount === totalEggs) eggsLoaded = true;
+        };
+    }
+
+    function getResultMessage() {
+        const gameUrl = window.location.href;
+        return `🐣 Пасхальный сбор 2026!\n👤 Игрок: ${finalPlayerName}\n🥚 Счёт: ${score}\n🔗 Попробуйте побить рекорд: ${gameUrl}`;
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.style.opacity = '1';
+        setTimeout(() => toast.style.opacity = '0', 2500);
+    }
+
+    async function copyResult() {
+        const text = getResultMessage();
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('✅ Результат скопирован! Отправьте в сообщество.');
+        } catch (err) {
+            showToast('❌ Не удалось скопировать.');
+        }
+    }
+
+    async function shareToVK() {
+        const text = getResultMessage();
+        await navigator.clipboard.writeText(text);
+        showToast('✅ Текст скопирован! Вставьте его в открывшемся диалоге.');
+        window.open(`https://vk.com/${VK_SCREEN_NAME}`, '_blank');
+    }
+
+    function updateShareLinks() {
+        const message = getResultMessage();
+        const encodedMessage = encodeURIComponent(message);
+        document.getElementById('shareTelegramBtn').href = `https://t.me/${TG_USERNAME}?text=${encodedMessage}`;
+        const vkBtn = document.getElementById('shareVkBtn');
+        vkBtn.removeEventListener('click', shareToVK);
+        vkBtn.addEventListener('click', (e) => { e.preventDefault(); shareToVK(); });
+    }
+
+    async function showLeaderboardOnly(title, showReloadButton = true) {
+        document.getElementById('leaderboard-title').innerText = title;
+        const reloadBtn = document.getElementById('reload-btn');
+        if (showReloadButton) reloadBtn.classList.remove('hidden');
+        else reloadBtn.classList.add('hidden');
+        document.getElementById('leaderboard-screen').style.display = 'block';
+        document.getElementById('top-list').innerHTML = "Загрузка рейтинга...";
+        await getTopScores();
+        updateShareLinks();
+    }
+
+    if (!isEventActive()) {
+        document.body.classList.add('event-ended');
+        canvas.style.pointerEvents = 'none';
+        gameActive = false;
+        showLeaderboardOnly("🥚 Пасхальный сбор завершён 🥚", false);
+        throw new Error("Ивент окончен");
+    }
+
+    // ========== НАСТРОЙКА CANVAS И УПРАВЛЕНИЕ ==========
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        basket.w = Math.min(110, canvas.width / 3);
+        basket.h = basket.w * (823 / 740);
+        basket.y = canvas.height - basket.h - 15;
+        if (basket.x + basket.w > canvas.width) basket.x = canvas.width - basket.w;
+        if (basket.x < 0) basket.x = 0;
+    }
+    window.addEventListener('resize', () => { if (gameActive) { resize(); draw(); } });
+    function handleMove(clientX) {
+        if (!gameActive) return;
+        let newX = clientX - basket.w / 2;
+        newX = Math.min(Math.max(0, newX), canvas.width - basket.w);
+        basket.x = newX;
+    }
+    window.addEventListener('mousemove', (e) => { if (gameActive) handleMove(e.clientX); });
+    window.addEventListener('touchmove', (e) => { if (gameActive) { e.preventDefault(); handleMove(e.touches[0].clientX); } });
+    window.addEventListener('touchstart', (e) => { if (gameActive) { e.preventDefault(); handleMove(e.touches[0].clientX); } });
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    resize();
+
+    function showFloatingMessage(text, x, y, color = '#ffaa00') {
+        const div = document.createElement('div');
+        div.className = 'floating-message';
+        div.innerText = text;
+        div.style.left = x + 'px';
+        div.style.top = y + 'px';
+        div.style.color = color;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 800);
+    }
+
+    // ========== ТИПЫ ЯИЦ ==========
+    function getRandomEggType() {
+        const r = Math.random();
+        if (r < 0.7) return 'normal';
+        if (r < 0.85) return 'golden';
+        if (r < 0.95) return 'ice';
+        return 'rotten';
+    }
+
+    // ========== AIRTABLE ==========
+    async function saveToAirtable(name, scoreValue) {
+        const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': AIRTABLE_TOKEN, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ records: [{ fields: { "Name": name.substring(0, 20), "FScore": parseInt(scoreValue) } }] })
+            });
+            if (!response.ok) throw new Error();
+            console.log("Рекорд сохранён");
+        } catch (e) {
+            localStorage.setItem('fallbackScore', scoreValue);
+            localStorage.setItem('fallbackName', name);
+        }
+    }
+    async function getTopScores() {
+        const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?sort[0][field]=FScore&sort[0][direction]=desc&maxRecords=5`;
+        try {
+            const response = await fetch(url, { headers: { 'Authorization': AIRTABLE_TOKEN } });
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+            let html = "<h3 style='margin:5px 0'>🏆 Топ-5 игроков 🏆</h3>";
+            if (data.records && data.records.length) {
+                data.records.forEach(rec => {
+                    const name = rec.fields.Name || "Аноним";
+                    const scoreVal = rec.fields.FScore || 0;
+                    html += `<div class="entry"><span>${escapeHtml(name)}</span><b>${scoreVal}</b></div>`;
+                });
+            } else {
+                html += "<div>Пока нет рекордов. Будь первым!</div>";
+            }
+            const fallbackScore = localStorage.getItem('fallbackScore');
+            const fallbackName = localStorage.getItem('fallbackName');
+            if (fallbackScore && fallbackName) {
+                html += `<div class="entry" style="background:#ffe0a3;"><span>📱 Локальный рекорд: ${escapeHtml(fallbackName)}</span><b>${fallbackScore}</b></div>`;
+            }
+            document.getElementById('top-list').innerHTML = html;
+        } catch (e) {
+            document.getElementById('top-list').innerHTML = "⚠️ Ошибка загрузки рейтинга, но результат сохранён!";
+        }
+    }
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+    }
+
+    // ========== МОДАЛЬНОЕ ОКНО ДЛЯ ИМЕНИ ==========
+    function showNameModal(callback) {
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'name-modal';
+        modalDiv.innerHTML = `
+            <div class="name-modal-content">
+                <div class="close-modal">&times;</div>
+                <h2>🐰 Пасхальный сбор 🥚</h2>
+                <p>Ваш счёт: ${score}</p>
+                <input type="text" id="player-name-input" placeholder="Введите имя" maxlength="20" autocomplete="off">
+                <div class="name-modal-buttons">
+                    <button class="name-modal-btn" id="save-name-btn">Сохранить</button>
+                    <button class="name-modal-btn cancel" id="cancel-name-btn">Пропустить</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalDiv);
+        const input = modalDiv.querySelector('#player-name-input');
+        const saveBtn = modalDiv.querySelector('#save-name-btn');
+        const cancelBtn = modalDiv.querySelector('#cancel-name-btn');
+        const closeBtn = modalDiv.querySelector('.close-modal');
+        const finish = (name) => { modalDiv.remove(); callback(name || null); };
+        saveBtn.onclick = () => { let name = input.value.trim(); if (name === "") name = "Аноним"; finish(name); };
+        cancelBtn.onclick = () => finish(null);
+        closeBtn.onclick = () => finish(null);
+        input.onkeypress = (e) => { if (e.key === 'Enter') { let name = input.value.trim(); if (name === "") name = "Аноним"; finish(name); } };
+        setTimeout(() => input.focus(), 50);
+    }
+
+    // ========== ИГРОВАЯ ЛОГИКА ==========
+    function spawnEgg() {
+        if (!gameActive) return;
+        const type = getRandomEggType();
+        eggs.push({
+            x: Math.random() * (canvas.width - 50) + 25,
+            y: -50,
+            baseSpeed: 3 + (score / 15),
+            type: type,
+        });
+        spawnTimeout = setTimeout(spawnEgg, Math.max(300, 1100 - score * 15));
+    }
+    async function gameOver() {
+        if (!gameActive) return;
+        gameActive = false;
+        if (spawnTimeout) clearTimeout(spawnTimeout);
+        if (animationId) cancelAnimationFrame(animationId);
+        document.body.classList.add('game-ended');
+        canvas.style.cursor = 'auto';
+        showNameModal(async (playerName) => {
+            if (playerName) {
+                finalPlayerName = playerName;
+                await saveToAirtable(playerName, score);
+            }
+            await showLeaderboardOnly("ИГРА ОКОНЧЕНА!", true);
+        });
+    }
+    function applyCatchEffect(egg, index, eggX, eggY) {
+        switch(egg.type) {
+            case 'golden': score += 5; showFloatingMessage('+5 ✨', eggX, eggY, '#FFD700'); break;
+            case 'ice': slowUntil = Date.now() + 2000; showFloatingMessage('❄️ ЗАМЕДЛЕНИЕ ❄️', eggX, eggY, '#80D8FF'); break;
+            case 'rotten': score = Math.max(0, score - 1); showFloatingMessage('-1 💩', eggX, eggY, '#8B4513'); break;
+            default: score++; showFloatingMessage('+1', eggX, eggY, '#4CAF50');
+        }
+        document.getElementById('score').innerText = score;
+        eggs.splice(index, 1);
+    }
+    function draw() {
+        if (!gameActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#8bc34a';
+        ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+        if (basketLoaded) {
+            ctx.drawImage(basketImg, basket.x, basket.y, basket.w, basket.h);
+        } else {
+            ctx.fillStyle = '#795548';
+            ctx.beginPath();
+            ctx.roundRect(basket.x, basket.y, basket.w, basket.h, 10);
+            ctx.fill();
+        }
+        const now = Date.now();
+        const isSlow = now < slowUntil;
+        const eggSize = 48;
+        for (let i = 0; i < eggs.length; i++) {
+            const egg = eggs[i];
+            let speed = egg.baseSpeed;
+            if (isSlow) speed = egg.baseSpeed * 0.5;
+            egg.y += speed;
+            
+            let img = null;
+            if (egg.type === 'normal') img = eggImages.normal;
+            else if (egg.type === 'golden') img = eggImages.golden;
+            else if (egg.type === 'ice') img = eggImages.ice;
+            else if (egg.type === 'rotten') img = eggImages.rotten;
+            
+            if (img && img.complete && img.naturalWidth > 0) {
+                ctx.drawImage(img, egg.x - eggSize/2, egg.y - eggSize/2, eggSize, eggSize);
+            } else {
+                let fallbackColor = '#ffaa00';
+                if (egg.type === 'golden') fallbackColor = '#FFD700';
+                else if (egg.type === 'ice') fallbackColor = '#80D8FF';
+                else if (egg.type === 'rotten') fallbackColor = '#8B4513';
+                ctx.fillStyle = fallbackColor;
+                ctx.beginPath();
+                ctx.ellipse(egg.x, egg.y, eggSize/2, eggSize/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "white";
+                ctx.stroke();
+            }
+            
+            if (egg.y + eggSize/2 > basket.y && egg.x > basket.x && egg.x < basket.x + basket.w) {
+                applyCatchEffect(egg, i, egg.x, egg.y);
+                i--;
+                continue;
+            }
+            if (egg.y + eggSize/2 > canvas.height) {
+                if (egg.type === 'rotten') {
+                    eggs.splice(i, 1);
+                    i--;
+                    continue;
+                } else {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+        animationId = requestAnimationFrame(draw);
+    }
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            this.moveTo(x+r, y);
+            this.lineTo(x+w-r, y);
+            this.quadraticCurveTo(x+w, y, x+w, y+r);
+            this.lineTo(x+w, y+h-r);
+            this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+            this.lineTo(x+r, y+h);
+            this.quadraticCurveTo(x, y+h, x, y+h-r);
+            this.lineTo(x, y+r);
+            this.quadraticCurveTo(x, y, x+r, y);
+            return this;
+        };
+    }
+
+    document.getElementById('copyResultBtn').addEventListener('click', copyResult);
+
+    resize();
+    spawnEgg();
+    animationId = requestAnimationFrame(draw);
+</script>
+</body>
+</html>
